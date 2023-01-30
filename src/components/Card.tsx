@@ -17,6 +17,21 @@ const Card = () => {
       .catch((err) => dispatch({ type: "FETCH_ERROR", payload: err?.message }));
   };
 
+  type EditProps = {
+    id: number;
+    userId: number;
+    title: string;
+    body: string;
+  };
+
+  const edit = (data: EditProps) => {
+    dispatch({ type: "EDIT" });
+    dispatch({ type: "CHANGE_ID", payload: data.id });
+    dispatch({ type: "CHANGE_USERID", payload: data.userId });
+    dispatch({ type: "CHANGE_TITLE", payload: data.title });
+    dispatch({ type: "CHANGE_BODY", payload: data.body });
+  };
+
   useEffect(() => {
     dispatch({ type: "FETCH" });
     fetch(process.env.REACT_APP_POSTS as string)
@@ -57,14 +72,16 @@ const Card = () => {
       {state.tag === "loading" && <p id="loading">Loading...</p>}
       {state.tag === "error" && <p id="loading">{state.errorMessage}</p>}
       {state.tag === "empty" && <p id="loading">Todo Kosong 😴</p>}
-      {state.tag === "loaded" &&
+      {state.tag === "loaded" || state.tag === "edit" ? (
         state.datas.map((data: Data, i: number) => {
           return (
             <div className="card" key={i}>
               <p>User Id: {data.userId}</p>
               <p>Title: {data.title}</p>
               <p>Body: {data.body}</p>
-              <button className="btn-edit">Edit</button>
+              <button className="btn-edit" onClick={() => edit(data)}>
+                Edit
+              </button>
               <button
                 className="btn-delete"
                 onClick={() => handleDelete(data.id)}
@@ -73,7 +90,10 @@ const Card = () => {
               </button>
             </div>
           );
-        })}
+        })
+      ) : (
+        <></>
+      )}
     </div>
   );
 };

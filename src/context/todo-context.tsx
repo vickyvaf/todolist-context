@@ -14,6 +14,7 @@ export type Data = { id: number; userId: number; title: string; body: string };
 type State = {
   tag: string;
   datas: Array<Data>;
+  id: number;
   userIdInput: string;
   titleInput: string;
   bodyInput: string;
@@ -22,13 +23,14 @@ type State = {
 
 type Action = {
   type: string;
-  payload?: string | [];
+  payload?: string | number | [];
 };
 
 export const TodoContext = createContext<TodoContextType>({
   state: {
     tag: "idle",
     datas: [],
+    id: 0,
     userIdInput: "",
     titleInput: "",
     bodyInput: "",
@@ -41,6 +43,7 @@ export const TodoProvider = ({ children }: TodoProviderProps) => {
   const initialState: State = {
     tag: "idle",
     datas: [],
+    id: 0,
     userIdInput: "",
     titleInput: "",
     bodyInput: "",
@@ -108,6 +111,12 @@ export const TodoProvider = ({ children }: TodoProviderProps) => {
               tag: "loading",
             };
           }
+          case "CHANGE_ID": {
+            return {
+              ...state,
+              id: action.payload,
+            };
+          }
           case "CHANGE_USERID": {
             return {
               ...state,
@@ -124,6 +133,12 @@ export const TodoProvider = ({ children }: TodoProviderProps) => {
             return {
               ...state,
               bodyInput: action.payload,
+            };
+          }
+          case "EDIT": {
+            return {
+              ...state,
+              tag: "edit",
             };
           }
           default:
@@ -138,6 +153,12 @@ export const TodoProvider = ({ children }: TodoProviderProps) => {
               tag: "loading",
             };
           }
+          case "CHANGE_ID": {
+            return {
+              ...state,
+              id: action.payload,
+            };
+          }
           case "CHANGE_USERID": {
             return {
               ...state,
@@ -154,6 +175,64 @@ export const TodoProvider = ({ children }: TodoProviderProps) => {
             return {
               ...state,
               bodyInput: action.payload,
+            };
+          }
+          case "EDIT": {
+            return {
+              ...state,
+              tag: "edit",
+            };
+          }
+          default:
+            return state;
+        }
+      }
+      case "edit": {
+        switch (action.type) {
+          case "FETCH": {
+            return {
+              ...state,
+              tag: "loading",
+            };
+          }
+          case "CHANGE_ID": {
+            return {
+              ...state,
+              id: action.payload,
+            };
+          }
+          case "CHANGE_USERID": {
+            return {
+              ...state,
+              userIdInput: action.payload,
+            };
+          }
+          case "CHANGE_TITLE": {
+            return {
+              ...state,
+              titleInput: action.payload,
+            };
+          }
+          case "CHANGE_BODY": {
+            return {
+              ...state,
+              bodyInput: action.payload,
+            };
+          }
+          case "EDIT": {
+            return {
+              ...state,
+              tag: "edit",
+            };
+          }
+          case "CANCEL_EDIT": {
+            return {
+              ...state,
+              tag: "loaded",
+              id: 0,
+              userIdInput: "",
+              titleInput: "",
+              bodyInput: "",
             };
           }
           default:

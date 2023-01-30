@@ -31,8 +31,29 @@ const Form = () => {
       });
   };
 
+  const handleEdit = (e: React.FormEvent) => {
+    e.preventDefault();
+    dispatch({ type: "FETCH" });
+
+    fetch((process.env.REACT_APP_POSTS as string) + "/" + state.id, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    })
+      .then(() => {
+        dispatch({ type: "ADDED_SUCCESS" });
+      })
+      .catch((err) => dispatch({ type: "FETCH_ERROR", payload: err?.message }));
+  };
+
+  const handleCancelEdit = () => {
+    dispatch({ type: "CANCEL_EDIT" });
+  };
+
   return (
-    <form onSubmit={handleSubmit}>
+    <form>
       <div className="input">
         <label>User Id</label>
         <input
@@ -69,7 +90,21 @@ const Form = () => {
           required
         />
       </div>
-      <button type="submit">Submit</button>
+      {state.tag !== "edit" && (
+        <button type="submit" onClick={handleSubmit}>
+          Submit
+        </button>
+      )}
+      {state.tag === "edit" && (
+        <>
+          <button type="submit" onClick={handleEdit}>
+            Edit
+          </button>
+          <button type="submit" onClick={handleCancelEdit}>
+            Batal
+          </button>
+        </>
+      )}
     </form>
   );
 };

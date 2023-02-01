@@ -36,17 +36,21 @@ const Card = () => {
 
   useEffect(() => {
     dispatch({ type: "FETCH" });
-    fetch(postsUrl!)
-      .then((res) => res.json())
-      .then((res) => {
-        if (res.length === 0) {
-          dispatch({ type: "FETCH_EMPTY" });
-        } else {
-          dispatch({ type: "FETCH_SUCCESS", payload: res });
-        }
-      })
-      .catch((err) => dispatch({ type: "FETCH_ERROR", payload: err?.message }));
-  }, [state.tag === "loading"]);
+    if (state.tag === "loading") {
+      fetch(postsUrl!)
+        .then((res) => res.json())
+        .then((res) => {
+          if (res.length === 0) {
+            dispatch({ type: "FETCH_EMPTY" });
+          } else {
+            dispatch({ type: "FETCH_SUCCESS", payload: res });
+          }
+        })
+        .catch((err) =>
+          dispatch({ type: "FETCH_ERROR", payload: err?.message })
+        );
+    }
+  }, [state.tag]);
 
   return (
     <div className="card-container">

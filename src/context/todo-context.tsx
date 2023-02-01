@@ -9,29 +9,45 @@ type TodoProviderProps = {
   children: React.ReactNode;
 };
 
-export type Data = { id: number; userId: number; title: string; body: string };
+export interface Data {
+  id: number;
+  userId: number;
+  title: string;
+  body: string;
+}
 
 type State = {
   tag: string;
   datas: Array<Data>;
   id: number;
-  userIdInput: string;
+  userIdInput: number;
   titleInput: string;
   bodyInput: string;
   errorMessage: string;
 };
 
-type Action = {
-  type: string;
-  payload?: string | number | [];
-};
+type Action =
+  | { type: "FETCH" }
+  | { type: "FETCH_SUCCESS"; payload: Array<Data> }
+  | { type: "FETCH_ERROR"; payload: string }
+  | { type: "FETCH_EMPTY" }
+  | { type: "SUBMIT_SUCCESS" }
+  | { type: "SUBMIT_ERROR"; payload: string }
+  | { type: "DELETE_SUCCESS" }
+  | { type: "DELETE_ERROR"; payload: string }
+  | { type: "CHANGE_ID"; payload: number }
+  | { type: "CHANGE_USERID"; payload: number }
+  | { type: "CHANGE_TITLE"; payload: string }
+  | { type: "CHANGE_BODY"; payload: string }
+  | { type: "EDIT" }
+  | { type: "CANCEL_EDIT" };
 
 export const TodoContext = createContext<TodoContextType>({
   state: {
     tag: "idle",
     datas: [],
     id: 0,
-    userIdInput: "",
+    userIdInput: 0,
     titleInput: "",
     bodyInput: "",
     errorMessage: "",
@@ -44,13 +60,13 @@ export const TodoProvider = ({ children }: TodoProviderProps) => {
     tag: "idle",
     datas: [],
     id: 0,
-    userIdInput: "",
+    userIdInput: 0,
     titleInput: "",
     bodyInput: "",
     errorMessage: "",
   };
 
-  const reducer = (state: any, action: Action) => {
+  const reducer = (state: State, action: Action) => {
     switch (state.tag) {
       case "idle": {
         switch (action.type) {
@@ -71,7 +87,7 @@ export const TodoProvider = ({ children }: TodoProviderProps) => {
             return {
               ...state,
               tag: "loaded",
-              datas: action.payload ?? initialState.datas,
+              datas: action.payload,
             };
           }
           case "FETCH_ERROR": {
@@ -89,32 +105,38 @@ export const TodoProvider = ({ children }: TodoProviderProps) => {
               datas: [],
             };
           }
-          case "ADDED_SUCCESS": {
-            return {
-              ...state,
-              tag: "added",
-              userIdInput: "",
-              titleInput: "",
-              bodyInput: "",
-              errorMessage: "",
-            };
-          }
           default:
             return state;
         }
       }
       case "loaded": {
         switch (action.type) {
-          case "FETCH": {
+          case "SUBMIT_SUCCESS": {
+            return {
+              ...state,
+              tag: "loading",
+              userIdInput: 0,
+              titleInput: "",
+              bodyInput: "",
+              errorMessage: "",
+            };
+          }
+          case "SUBMIT_ERROR": {
+            return {
+              ...state,
+              tag: "error",
+            };
+          }
+          case "DELETE_SUCCESS": {
             return {
               ...state,
               tag: "loading",
             };
           }
-          case "CHANGE_ID": {
+          case "DELETE_ERROR": {
             return {
               ...state,
-              id: action.payload,
+              tag: "error",
             };
           }
           case "CHANGE_USERID": {
@@ -145,18 +167,22 @@ export const TodoProvider = ({ children }: TodoProviderProps) => {
             return state;
         }
       }
-      case "added": {
+      case "empty": {
         switch (action.type) {
-          case "FETCH": {
+          case "SUBMIT_SUCCESS": {
             return {
               ...state,
               tag: "loading",
+              userIdInput: 0,
+              titleInput: "",
+              bodyInput: "",
+              errorMessage: "",
             };
           }
-          case "CHANGE_ID": {
+          case "SUBMIT_ERROR": {
             return {
               ...state,
-              id: action.payload,
+              tag: "error",
             };
           }
           case "CHANGE_USERID": {
@@ -175,12 +201,6 @@ export const TodoProvider = ({ children }: TodoProviderProps) => {
             return {
               ...state,
               bodyInput: action.payload,
-            };
-          }
-          case "EDIT": {
-            return {
-              ...state,
-              tag: "edit",
             };
           }
           default:
@@ -189,10 +209,20 @@ export const TodoProvider = ({ children }: TodoProviderProps) => {
       }
       case "edit": {
         switch (action.type) {
-          case "FETCH": {
+          case "EDIT": {
             return {
               ...state,
-              tag: "loading",
+              tag: "edit",
+            };
+          }
+          case "CANCEL_EDIT": {
+            return {
+              ...state,
+              tag: "loaded",
+              id: 0,
+              userIdInput: 0,
+              titleInput: "",
+              bodyInput: "",
             };
           }
           case "CHANGE_ID": {
@@ -217,6 +247,74 @@ export const TodoProvider = ({ children }: TodoProviderProps) => {
             return {
               ...state,
               bodyInput: action.payload,
+            };
+          }
+          case "SUBMIT_SUCCESS": {
+            return {
+              ...state,
+              tag: "loading",
+              userIdInput: 0,
+              titleInput: "",
+              bodyInput: "",
+              errorMessage: "",
+            };
+          }
+          case "SUBMIT_ERROR": {
+            return {
+              ...state,
+              tag: "loading",
+            };
+          }
+          case "DELETE_SUCCESS": {
+            return {
+              ...state,
+              tag: "loading",
+            };
+          }
+          case "DELETE_ERROR": {
+            return {
+              ...state,
+              tag: "error",
+            };
+          }
+          default:
+            return state;
+        }
+      }
+      case "error": {
+        switch (action.type) {
+          case "FETCH": {
+            return {
+              ...state,
+              tag: "loading",
+            };
+          }
+          case "SUBMIT_SUCCESS": {
+            return {
+              ...state,
+              tag: "loading",
+              userIdInput: 0,
+              titleInput: "",
+              bodyInput: "",
+              errorMessage: "",
+            };
+          }
+          case "SUBMIT_ERROR": {
+            return {
+              ...state,
+              tag: "loading",
+            };
+          }
+          case "DELETE_SUCCESS": {
+            return {
+              ...state,
+              tag: "loading",
+            };
+          }
+          case "DELETE_ERROR": {
+            return {
+              ...state,
+              tag: "error",
             };
           }
           case "EDIT": {
@@ -230,51 +328,9 @@ export const TodoProvider = ({ children }: TodoProviderProps) => {
               ...state,
               tag: "loaded",
               id: 0,
-              userIdInput: "",
+              userIdInput: 0,
               titleInput: "",
               bodyInput: "",
-            };
-          }
-          default:
-            return state;
-        }
-      }
-      case "empty": {
-        switch (action.type) {
-          case "FETCH": {
-            return {
-              ...state,
-              tag: "loading",
-            };
-          }
-          case "CHANGE_USERID": {
-            return {
-              ...state,
-              userIdInput: action.payload,
-            };
-          }
-          case "CHANGE_TITLE": {
-            return {
-              ...state,
-              titleInput: action.payload,
-            };
-          }
-          case "CHANGE_BODY": {
-            return {
-              ...state,
-              bodyInput: action.payload,
-            };
-          }
-          default:
-            return state;
-        }
-      }
-      case "error": {
-        switch (action.type) {
-          case "FETCH": {
-            return {
-              ...state,
-              tag: "loading",
             };
           }
           case "CHANGE_USERID": {

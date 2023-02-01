@@ -1,3 +1,4 @@
+import { postsUrl } from "../api";
 import { useTodoContext } from "../context/todo-context";
 
 const Form = () => {
@@ -11,31 +12,22 @@ const Form = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    dispatch({ type: "FETCH" });
-
-    fetch(process.env.REACT_APP_POSTS as string, {
+    fetch(postsUrl!, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(data),
     })
-      .then((res) => res.json())
-      .then(() => {
-        dispatch({
-          type: "ADDED_SUCCESS",
-        });
-      })
+      .then(() => dispatch({ type: "SUBMIT_SUCCESS" }))
       .catch((error) => {
-        dispatch({ type: "FETCH_ERROR", payload: error?.message });
+        dispatch({ type: "SUBMIT_ERROR", payload: error?.message });
       });
   };
 
   const handleEdit = (e: React.FormEvent) => {
     e.preventDefault();
-    dispatch({ type: "FETCH" });
-
-    fetch((process.env.REACT_APP_POSTS as string) + "/" + state.id, {
+    fetch(postsUrl + "/" + state.id, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -43,9 +35,11 @@ const Form = () => {
       body: JSON.stringify(data),
     })
       .then(() => {
-        dispatch({ type: "ADDED_SUCCESS" });
+        dispatch({ type: "SUBMIT_SUCCESS" });
       })
-      .catch((err) => dispatch({ type: "FETCH_ERROR", payload: err?.message }));
+      .catch((err) =>
+        dispatch({ type: "SUBMIT_ERROR", payload: err?.message })
+      );
   };
 
   const handleCancelEdit = () => {
@@ -59,9 +53,9 @@ const Form = () => {
         <input
           value={state.userIdInput}
           onChange={(e) =>
-            dispatch({ type: "CHANGE_USERID", payload: e.target.value })
+            dispatch({ type: "CHANGE_USERID", payload: Number(e.target.value) })
           }
-          type="text"
+          type="number"
           placeholder="user id"
           required
         />

@@ -1,21 +1,10 @@
 import { useEffect } from "react";
+import { postsUrl } from "../api";
 import { useTodoContext } from "../context/todo-context";
 import { Data } from "../context/todo-context";
 
 const Card = () => {
   const { state, dispatch } = useTodoContext();
-
-  const handleDelete = (id: number) => {
-    dispatch({ type: "FETCH" });
-    fetch((process.env.REACT_APP_POSTS as string) + "/" + id, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
-      .then(() => dispatch({ type: "ADDED_SUCCESS" }))
-      .catch((err) => dispatch({ type: "FETCH_ERROR", payload: err?.message }));
-  };
 
   type EditProps = {
     id: number;
@@ -32,9 +21,22 @@ const Card = () => {
     dispatch({ type: "CHANGE_BODY", payload: data.body });
   };
 
+  const handleDelete = (id: number) => {
+    fetch(postsUrl + "/" + id, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+      .then(() => dispatch({ type: "DELETE_SUCCESS" }))
+      .catch((err) =>
+        dispatch({ type: "DELETE_ERROR", payload: err?.message })
+      );
+  };
+
   useEffect(() => {
     dispatch({ type: "FETCH" });
-    fetch(process.env.REACT_APP_POSTS as string)
+    fetch(postsUrl!)
       .then((res) => res.json())
       .then((res) => {
         if (res.length === 0) {
@@ -44,28 +46,7 @@ const Card = () => {
         }
       })
       .catch((err) => dispatch({ type: "FETCH_ERROR", payload: err?.message }));
-  }, []);
-
-  useEffect(() => {
-    if (state.tag === "added") {
-      dispatch({ type: "FETCH" });
-      fetch(process.env.REACT_APP_POSTS as string)
-        .then((res) => res.json())
-        .then((res) => {
-          if (res.length === 0) {
-            dispatch({ type: "FETCH_EMPTY" });
-          } else {
-            dispatch({
-              type: "FETCH_SUCCESS",
-              payload: res,
-            });
-          }
-        })
-        .catch((err) =>
-          dispatch({ type: "FETCH_ERROR", payload: err?.message })
-        );
-    }
-  }, [true && state.tag === "loading"]);
+  }, [state.tag === "loading"]);
 
   return (
     <div className="card-container">

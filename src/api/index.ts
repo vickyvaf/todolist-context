@@ -1,0 +1,1 @@
+export const postsUrl = process.env.REACT_APP_POSTS

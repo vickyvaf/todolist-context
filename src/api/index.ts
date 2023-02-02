@@ -1,1 +1,1 @@
-export const postsUrl = process.env.REACT_APP_POSTS
+export const postsUrl: string = process.env.REACT_APP_POSTS ?? "";

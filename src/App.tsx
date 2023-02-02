@@ -1,17 +1,23 @@
 import { TodoProvider } from "./context/todo-context";
+import { ToastContainer } from "react-toastify";
+import AddButton from "./components/AddButton";
+import FormCreate from "./components/FormCreate";
 import Container from "./layouts/Container";
-import Form from "./components/Form";
 import Card from "./components/Card";
+import FormEdit from "./components/FormEdit";
 
-function App() {
+const App = () => {
   return (
     <TodoProvider>
       <Container>
-        <Form />
+        <ToastContainer />
+        <AddButton />
         <Card />
       </Container>
+      <FormCreate />
+      <FormEdit />
     </TodoProvider>
   );
-}
+};
 
 export default App;

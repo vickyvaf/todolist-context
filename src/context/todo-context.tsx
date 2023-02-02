@@ -11,16 +11,26 @@ type TodoProviderProps = {
 
 export interface Data {
   id: number;
-  userId: number;
+  userId: string;
   title: string;
   body: string;
 }
 
 type State = {
-  tag: string;
+  tag:
+    | "idle"
+    | "fetching"
+    | "submitting"
+    | "editing"
+    | "deleting"
+    | "success"
+    | "empty"
+    | "error"
+    | "add"
+    | "edit";
   datas: Array<Data>;
   id: number;
-  userIdInput: number;
+  userIdInput: string;
   titleInput: string;
   bodyInput: string;
   errorMessage: string;
@@ -31,23 +41,30 @@ type Action =
   | { type: "FETCH_SUCCESS"; payload: Array<Data> }
   | { type: "FETCH_ERROR"; payload: string }
   | { type: "FETCH_EMPTY" }
+  | { type: "ADD" }
+  | { type: "ADD_CANCEL" }
+  | { type: "SUBMIT" }
   | { type: "SUBMIT_SUCCESS" }
   | { type: "SUBMIT_ERROR"; payload: string }
+  | { type: "EDIT"; payload: Data }
+  | { type: "EDIT_CANCEL" }
+  | { type: "EDIT_SUBMIT" }
+  | { type: "EDIT_SUCCESS" }
+  | { type: "EDIT_ERROR"; payload: string }
+  | { type: "DELETE"; payload: number }
   | { type: "DELETE_SUCCESS" }
   | { type: "DELETE_ERROR"; payload: string }
   | { type: "CHANGE_ID"; payload: number }
-  | { type: "CHANGE_USERID"; payload: number }
+  | { type: "CHANGE_USERID"; payload: string }
   | { type: "CHANGE_TITLE"; payload: string }
-  | { type: "CHANGE_BODY"; payload: string }
-  | { type: "EDIT" }
-  | { type: "CANCEL_EDIT" };
+  | { type: "CHANGE_BODY"; payload: string };
 
 export const TodoContext = createContext<TodoContextType>({
   state: {
     tag: "idle",
     datas: [],
     id: 0,
-    userIdInput: 0,
+    userIdInput: "",
     titleInput: "",
     bodyInput: "",
     errorMessage: "",
@@ -60,20 +77,20 @@ export const TodoProvider = ({ children }: TodoProviderProps) => {
     tag: "idle",
     datas: [],
     id: 0,
-    userIdInput: 0,
+    userIdInput: "",
     titleInput: "",
     bodyInput: "",
     errorMessage: "",
   };
 
-  const reducer = (state: State, action: Action) => {
+  const reducer = (state: State, action: Action): State => {
     switch (state.tag) {
       case "idle": {
         switch (action.type) {
           case "FETCH": {
             return {
               ...state,
-              tag: "loading",
+              tag: "fetching",
             };
           }
           default: {
@@ -81,12 +98,12 @@ export const TodoProvider = ({ children }: TodoProviderProps) => {
           }
         }
       }
-      case "loading": {
+      case "fetching": {
         switch (action.type) {
           case "FETCH_SUCCESS": {
             return {
               ...state,
-              tag: "loaded",
+              tag: "success",
               datas: action.payload,
             };
           }
@@ -109,13 +126,13 @@ export const TodoProvider = ({ children }: TodoProviderProps) => {
             return state;
         }
       }
-      case "loaded": {
+      case "submitting": {
         switch (action.type) {
           case "SUBMIT_SUCCESS": {
             return {
               ...state,
-              tag: "loading",
-              userIdInput: 0,
+              tag: "fetching",
+              userIdInput: "",
               titleInput: "",
               bodyInput: "",
               errorMessage: "",
@@ -127,10 +144,38 @@ export const TodoProvider = ({ children }: TodoProviderProps) => {
               tag: "error",
             };
           }
+          default:
+            return state;
+        }
+      }
+      case "editing": {
+        switch (action.type) {
+          case "EDIT_SUCCESS": {
+            return {
+              ...state,
+              tag: "fetching",
+              userIdInput: "",
+              titleInput: "",
+              bodyInput: "",
+              errorMessage: "",
+            };
+          }
+          case "EDIT_ERROR": {
+            return {
+              ...state,
+              tag: "error",
+            };
+          }
+          default:
+            return state;
+        }
+      }
+      case "deleting": {
+        switch (action.type) {
           case "DELETE_SUCCESS": {
             return {
               ...state,
-              tag: "loading",
+              tag: "fetching",
             };
           }
           case "DELETE_ERROR": {
@@ -139,28 +184,33 @@ export const TodoProvider = ({ children }: TodoProviderProps) => {
               tag: "error",
             };
           }
-          case "CHANGE_USERID": {
+          default:
+            return state;
+        }
+      }
+      case "success": {
+        switch (action.type) {
+          case "ADD": {
             return {
               ...state,
-              userIdInput: action.payload,
+              tag: "add",
             };
           }
-          case "CHANGE_TITLE": {
+          case "DELETE": {
             return {
               ...state,
-              titleInput: action.payload,
-            };
-          }
-          case "CHANGE_BODY": {
-            return {
-              ...state,
-              bodyInput: action.payload,
+              tag: "deleting",
+              id: action.payload,
             };
           }
           case "EDIT": {
             return {
               ...state,
               tag: "edit",
+              id: action.payload.id,
+              userIdInput: action.payload.userId,
+              titleInput: action.payload.title,
+              bodyInput: action.payload.body,
             };
           }
           default:
@@ -169,112 +219,10 @@ export const TodoProvider = ({ children }: TodoProviderProps) => {
       }
       case "empty": {
         switch (action.type) {
-          case "SUBMIT_SUCCESS": {
+          case "ADD": {
             return {
               ...state,
-              tag: "loading",
-              userIdInput: 0,
-              titleInput: "",
-              bodyInput: "",
-              errorMessage: "",
-            };
-          }
-          case "SUBMIT_ERROR": {
-            return {
-              ...state,
-              tag: "error",
-            };
-          }
-          case "CHANGE_USERID": {
-            return {
-              ...state,
-              userIdInput: action.payload,
-            };
-          }
-          case "CHANGE_TITLE": {
-            return {
-              ...state,
-              titleInput: action.payload,
-            };
-          }
-          case "CHANGE_BODY": {
-            return {
-              ...state,
-              bodyInput: action.payload,
-            };
-          }
-          default:
-            return state;
-        }
-      }
-      case "edit": {
-        switch (action.type) {
-          case "EDIT": {
-            return {
-              ...state,
-              tag: "edit",
-            };
-          }
-          case "CANCEL_EDIT": {
-            return {
-              ...state,
-              tag: "loaded",
-              id: 0,
-              userIdInput: 0,
-              titleInput: "",
-              bodyInput: "",
-            };
-          }
-          case "CHANGE_ID": {
-            return {
-              ...state,
-              id: action.payload,
-            };
-          }
-          case "CHANGE_USERID": {
-            return {
-              ...state,
-              userIdInput: action.payload,
-            };
-          }
-          case "CHANGE_TITLE": {
-            return {
-              ...state,
-              titleInput: action.payload,
-            };
-          }
-          case "CHANGE_BODY": {
-            return {
-              ...state,
-              bodyInput: action.payload,
-            };
-          }
-          case "SUBMIT_SUCCESS": {
-            return {
-              ...state,
-              tag: "loading",
-              userIdInput: 0,
-              titleInput: "",
-              bodyInput: "",
-              errorMessage: "",
-            };
-          }
-          case "SUBMIT_ERROR": {
-            return {
-              ...state,
-              tag: "loading",
-            };
-          }
-          case "DELETE_SUCCESS": {
-            return {
-              ...state,
-              tag: "loading",
-            };
-          }
-          case "DELETE_ERROR": {
-            return {
-              ...state,
-              tag: "error",
+              tag: "add",
             };
           }
           default:
@@ -286,35 +234,13 @@ export const TodoProvider = ({ children }: TodoProviderProps) => {
           case "FETCH": {
             return {
               ...state,
-              tag: "loading",
+              tag: "fetching",
             };
           }
-          case "SUBMIT_SUCCESS": {
+          case "ADD": {
             return {
               ...state,
-              tag: "loading",
-              userIdInput: 0,
-              titleInput: "",
-              bodyInput: "",
-              errorMessage: "",
-            };
-          }
-          case "SUBMIT_ERROR": {
-            return {
-              ...state,
-              tag: "loading",
-            };
-          }
-          case "DELETE_SUCCESS": {
-            return {
-              ...state,
-              tag: "loading",
-            };
-          }
-          case "DELETE_ERROR": {
-            return {
-              ...state,
-              tag: "error",
+              tag: "add",
             };
           }
           case "EDIT": {
@@ -323,14 +249,82 @@ export const TodoProvider = ({ children }: TodoProviderProps) => {
               tag: "edit",
             };
           }
-          case "CANCEL_EDIT": {
+          default:
+            return state;
+        }
+      }
+      case "add": {
+        switch (action.type) {
+          case "CHANGE_USERID": {
             return {
               ...state,
-              tag: "loaded",
-              id: 0,
-              userIdInput: 0,
+              userIdInput: action.payload,
+            };
+          }
+          case "CHANGE_TITLE": {
+            return {
+              ...state,
+              titleInput: action.payload,
+            };
+          }
+          case "CHANGE_BODY": {
+            return {
+              ...state,
+              bodyInput: action.payload,
+            };
+          }
+          case "SUBMIT": {
+            return {
+              ...state,
+              tag: "submitting",
+            };
+          }
+          case "ADD_CANCEL": {
+            switch (state.datas.length) {
+              case 0: {
+                return {
+                  ...state,
+                  tag: "empty",
+                  userIdInput: "",
+                  titleInput: "",
+                  bodyInput: "",
+                };
+              }
+            }
+            return {
+              ...state,
+              tag: "success",
+              userIdInput: "",
               titleInput: "",
               bodyInput: "",
+            };
+          }
+          default:
+            return state;
+        }
+      }
+      case "edit": {
+        switch (action.type) {
+          case "EDIT_CANCEL": {
+            return {
+              ...state,
+              tag: "success",
+              id: 0,
+              userIdInput: "",
+              titleInput: "",
+              bodyInput: "",
+            };
+          }
+          case "EDIT_SUBMIT": {
+            return {
+              ...state,
+              tag: "editing",
+            };
+          }
+          case "CHANGE_ID": {
+            return {
+              ...state,
+              id: action.payload,
             };
           }
           case "CHANGE_USERID": {
